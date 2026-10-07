@@ -1,6 +1,0 @@
-target/
-.idea/
-*.iml
-.env
-.env.local
-config/
