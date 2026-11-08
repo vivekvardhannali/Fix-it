@@ -18,12 +18,13 @@ const page = pageFrom(parseQuery(location.search).get("page"));
 
 async function load() {
   clearMessage(messages);
-  setChildren(content,
-    h("div", { class: "page-head" }, h("h1", {}, "My Questions"), h("a", { class: "btn btn-primary", href: "/ask.html" }, "Ask Question")),
-    h("p", { class: "loading" }, "Loading…"));
+  const makeHead = () => h("div", { class: "page-head" },
+    h("div", {}, h("h1", {}, "My Questions"), h("p", { class: "lede" }, "Everything you have asked, newest first.")),
+    h("a", { class: "btn btn-primary", href: "/ask.html" }, "+ Ask Question"));
+  setChildren(content, makeHead(), h("p", { class: "loading" }, "Loading…"));
   try {
     const result = await api.myQuestions(page);
-    const head = h("div", { class: "page-head" }, h("h1", {}, "My Questions"), h("a", { class: "btn btn-primary", href: "/ask.html" }, "Ask Question"));
+    const head = makeHead();
     if (result.items.length === 0) {
       setChildren(content, head, h("div", { class: "empty" }, "You have not asked any questions yet.", h("br"), h("a", { class: "btn btn-primary", href: "/ask.html" }, "Ask Question")));
       return;

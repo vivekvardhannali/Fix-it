@@ -4,7 +4,8 @@ import { h, setChildren } from "./dom.js";
 import { api } from "./api.js";
 import { currentUser, displayName, logout } from "./session.js";
 import { parseQuery, toId } from "./util.js";
-import { bellIcon, userIcon } from "./components/icons.js";
+import { bellIcon, searchIcon, chevronIcon, wrenchIcon } from "./components/icons.js";
+import { avatar } from "./components/avatar.js";
 import { timeEl } from "./components/time-el.js";
 import { questionHref } from "./components/question-row.js";
 
@@ -97,14 +98,21 @@ function buildBell({ live = true, unread = 0, sample = [] } = {}) {
 }
 
 function buildProfile(user, { live = true } = {}) {
+  const name = displayName(user);
   const button = h("button", { type: "button", class: "icon-btn", id: "profile-button", "aria-haspopup": "true", "aria-expanded": "false", "aria-controls": "profile-panel" },
-    userIcon(), h("span", {}, displayName(user)));
+    avatar(name), h("span", { class: "profile-name" }, name), chevronIcon());
   const panel = h("div", { class: "dropdown", id: "profile-panel", hidden: true },
-    h("div", { class: "dropdown-meta" }, h("div", {}, "User ID: ", h("strong", { id: "profile-user-id" }, String(user.userId))), h("div", {}, user.smail)),
+    h("div", { class: "dropdown-meta" }, avatar(name, { size: "lg" }),
+      h("div", { class: "who" }, h("div", { class: "who-name" }, name), h("div", {}, user.smail), h("div", {}, "User ID: ", h("strong", { id: "profile-user-id" }, String(user.userId))))),
     h("a", { class: "dropdown-item", href: "/profile.html" }, "My Questions"),
     h("button", { type: "button", class: "dropdown-item", id: "logout-button", onClick: () => (live ? logout() : undefined) }, "Log out"));
   makeMenu(button, panel);
   return h("div", { class: "header-menu header-menu--right" }, button, panel);
+}
+
+/** Wordmark with the wrench mark (shared with the login page). */
+export function logo() {
+  return h("a", { class: "logo", href: "/" }, h("span", { class: "logo-mark" }, wrenchIcon()), "Fix It");
 }
 
 /**
@@ -119,12 +127,13 @@ export function renderHeader(host, { user, page, live = true, unread = 0, notice
   host.className = "site-header";
   setChildren(host,
     h("div", { class: "container" },
-      h("a", { class: "logo", href: "/" }, "Fix It"),
+      logo(),
       h("nav", { class: "tabs", "aria-label": "Main" },
         tab("/", "Questions", page === "home" || page === "question" || page === "search"),
         tab("/ask.html", "Ask Question", page === "ask")),
       h("form", { class: "header-search", action: "/search.html", method: "get", role: "search" },
         h("label", { class: "visually-hidden", for: "header-q" }, "Search questions"),
+        searchIcon(),
         h("input", { id: "header-q", type: "search", name: "q", placeholder: "Search questions…", maxlength: 500, autocomplete: "off", value: onSearchPage ? params.get("q") || "" : undefined }),
         // keep the tags that are currently selected when searching from the homepage/search page
         (page === "home" || onSearchPage) ? params.getAll("tags").map((t) => h("input", { type: "hidden", name: "tags", value: t })) : null),
@@ -146,5 +155,7 @@ export function mountFooter() {
   const host = document.getElementById("site-footer");
   if (!host) return;
   host.className = "site-footer";
-  setChildren(host, h("div", { class: "container" }, "Fix It — IIT Madras · ", h("a", { href: "/" }, "Questions"), " · ", h("a", { href: "/ask.html" }, "Ask a question")));
+  setChildren(host, h("div", { class: "container" },
+    h("span", {}, "Fix It — IIT Madras"),
+    h("nav", { "aria-label": "Footer" }, h("a", { href: "/" }, "Questions"), h("a", { href: "/ask.html" }, "Ask a question"))));
 }

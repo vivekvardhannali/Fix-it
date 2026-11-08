@@ -7,6 +7,7 @@ import { differs } from "../time.js";
 import { indentLevel, netScore, plural } from "../util.js";
 import { validateComment } from "../validate.js";
 import { timeEl } from "./time-el.js";
+import { avatar } from "./avatar.js";
 import { messageBar, showError } from "./message-bar.js";
 import { anchorId } from "./post.js";
 import { highlight } from "../highlight.js";
@@ -28,11 +29,13 @@ export function commentItem(c, { depth = 0, mine = false, onVote, onReply, onEdi
   return h("div", { class: `comment depth-${level}`, id: anchorId("comment", c.commentId), dataset: { depth: String(depth) } },
     votesEl(c, onVote),
     h("div", { class: "comment-main" },
+      h("div", { class: "comment-head" },
+        avatar(c.authorName || "unknown", { size: "sm" }), h("span", { class: "name" }, c.authorName || "unknown"),
+        timeEl(c.createdAt), differs(c.createdAt, c.updatedAt) ? h("span", {}, "(edited)") : null),
       h("div", { class: "comment-body" }, c.body),
-      h("div", { class: "comment-meta" },
-        "— ", c.authorName || "unknown", ", ", timeEl(c.createdAt), differs(c.createdAt, c.updatedAt) ? " (edited)" : null,
-        onReply ? linkButton("reply", () => onReply(c), { "aria-label": `Reply to ${c.authorName || "this comment"}` }) : null,
-        mine && onEdit ? linkButton("edit", () => onEdit(c), { "aria-label": "Edit your comment" }) : null),
+      (onReply || (mine && onEdit)) ? h("div", { class: "comment-meta" },
+        onReply ? linkButton("Reply", () => onReply(c), { "aria-label": `Reply to ${c.authorName || "this comment"}` }) : null,
+        mine && onEdit ? linkButton("Edit", () => onEdit(c), { "aria-label": "Edit your comment" }) : null) : null,
       h("div", { class: "comment-slot" })));
 }
 

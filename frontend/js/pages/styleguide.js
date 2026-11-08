@@ -5,11 +5,12 @@ import { renderHeader, mountFooter } from "../header.js";
 import { messageBar } from "../components/message-bar.js";
 import { tagChip, tagList } from "../components/tag-chip.js";
 import { tagFilter, tagPicker } from "../components/tag-picker.js";
-import { questionRow } from "../components/question-row.js";
+import { questionRow, statusPill } from "../components/question-row.js";
 import { pager } from "../components/pager.js";
 import { post, signature, plusButton, acceptedMark, acceptButton } from "../components/post.js";
 import { commentItem } from "../components/comment-tree.js";
 import { answerPost } from "../components/answers.js";
+import { avatar } from "../components/avatar.js";
 
 const ago = (minutes) => new Date(Date.now() - minutes * 60_000).toISOString();
 const section = (title, note, ...content) => h("section", { class: "sg-section" }, h("h2", {}, title), note ? h("p", { class: "sg-note" }, note) : null, ...content);
@@ -24,8 +25,9 @@ renderHeader(document.getElementById("site-header"), {
 mountFooter();
 
 // ---- tokens (read from the stylesheet, so this page can never drift from it)
-const tokens = ["--bg", "--bg-header", "--accent", "--text", "--muted", "--muted-strong", "--link", "--link-hover", "--border", "--row-border", "--input-border",
-  "--tag-bg", "--tag-text", "--btn-primary", "--btn-primary-hover", "--ok", "--ok-dark", "--ok-solid", "--sig-bg", "--warn-bg", "--warn-border", "--error-bg", "--error-border", "--error-text", "--badge-bg", "--active-bg"];
+const tokens = ["--bg", "--surface", "--surface-2", "--surface-hover", "--text", "--text-2", "--muted", "--border", "--border-strong", "--input-border",
+  "--primary", "--primary-hover", "--primary-soft", "--primary-text", "--link", "--tag-bg", "--tag-text", "--ok", "--ok-soft", "--ok-text", "--open-soft", "--open-text",
+  "--warn-bg", "--warn-text", "--error-bg", "--error-text", "--badge-bg", "--flash"];
 const rootStyle = getComputedStyle(document.documentElement);
 const swatches = tokens.map((name) => h("div", { class: "swatch" },
   h("div", { class: "chip", style: `background:${rootStyle.getPropertyValue(name).trim()}` }), h("div", { class: "name" }, name, h("br"), rootStyle.getPropertyValue(name).trim())));
@@ -42,9 +44,9 @@ const comments = [
 ];
 
 setChildren(document.getElementById("guide"),
-  section("Colour tokens", "Defined once in css/fixit.css. Every pair used for text passes WCAG AA (checked by test/unit/contrast.test.mjs).", h("div", { class: "sg-swatches" }, swatches)),
+  section("Colour tokens", "Defined once in css/fixit.css. Every pair used for text passes WCAG AA (4.5:1).", h("div", { class: "sg-swatches" }, swatches)),
 
-  section("Typography", "Body 13px/1.4 · list title 17px · page title 27px · meta 12px.",
+  section("Typography", "System UI font · body 15px/1.55 · card title 17px · page title 28px · meta 13px.",
     h("div", { class: "q-title-page" }, "Question page title 27px"),
     h("p", {}, "Body text 13px: The quick brown fox jumps over the lazy dog. ", h("a", { href: "#" }, "A link"), " and ", h("code", {}, "inline code"), "."),
     h("p", { class: "subtle" }, "Muted meta text 12px: asked 3 hours ago")),
@@ -68,12 +70,16 @@ setChildren(document.getElementById("guide"),
     tagFilter({ tags: [{ name: "tech" }, { name: "math" }, { name: "code" }, { name: "others" }], selected: ["tech", "code"], onToggle: () => {} }),
     h("div", { class: "sg-box" }, tagPicker({ tags: [{ name: "tech" }, { name: "math" }, { name: "code" }, { name: "others" }], selected: ["math"] }).element)),
 
-  section("Message bars", "Info (yellow) and error (pink).",
+  section("Status and avatars", "Open / resolved pills · initials avatars (colour follows the name).",
+    h("div", { class: "sg-row" }, statusPill(false), statusPill(true)),
+    h("div", { class: "sg-row" }, ["cs23b043", "alice_b", "ee22b101", "me20b017", "Ravi Kumar", "bob"].map((n) => avatar(n)), avatar("cs23b043", { size: "lg" }), avatar("cs23b043", { size: "sm" }))),
+
+  section("Message bars", "Info (amber) and error (red).",
     messageBar("info", "Search is temporarily unavailable. You can still browse questions or ask a new one."),
     messageBar("error", "Invalid username or password"),
     messageBar("error", "Could not load the discussion.", h("button", { class: "btn-link", type: "button" }, "Try again"))),
 
-  section("Question rows", "Normal · resolved · zero plus / open · long title · 600-character word · ten tags · search result (no author/time) · tuning view.",
+  section("Question cards", "Normal · resolved · zero plus / open · long title · 600-character word · ten tags · search result (no author/time) · tuning view.",
     h("div", { class: "q-list" },
       questionRow(base),
       questionRow({ ...base, questionId: 2, isResolved: true, interestCount: 15, tags: ["tech", "code"], title: "Resolved: how to register for elective courses" }),
@@ -89,8 +95,8 @@ setChildren(document.getElementById("guide"),
     pager({ page: 4, totalPages: 9, hrefFor: (p) => "#p" + p }),
     pager({ page: 19, totalPages: 20, hrefFor: (p) => "#p" + p })),
 
-  section("Posts", "Question post with the + box (off / on) · answer with the select-as-correct check · accepted answer · signature with edited time.",
-    post({ gutter: plusButton({ count: 3, pressed: false, onClick: () => {} }), text: "Full question body,\nline breaks are kept.", extra: h("div", { class: "sg-row" }, tagList(["tech", "code"])), actions: h("a", { href: "#" }, "edit"), sign: signature({ verb: "asked", createdAt: ago(180), updatedAt: ago(60), authorName: "cs23b043" }) }),
+  section("Posts", "Question card with the + pill (off / on) · answer with the accept button · accepted answer · author row with edited time.",
+    post({ gutter: plusButton({ count: 3, pressed: false, onClick: () => {} }), text: "Full question body,\nline breaks are kept.", extra: h("div", { class: "sg-row" }, tagList(["tech", "code"])), actions: h("a", { href: "#" }, "Edit question"), sign: signature({ verb: "asked", createdAt: ago(180), updatedAt: ago(60), authorName: "cs23b043" }) }),
     post({ gutter: plusButton({ count: 4, pressed: true, onClick: () => {} }), text: "The + box is highlighted when it is mine.", sign: signature({ verb: "asked", createdAt: ago(20), updatedAt: ago(20), authorName: "cs23b024" }) }),
     answerPost({ answerId: 1, body: "Update the router firmware.", isAccepted: true, authorName: "ee22b101", createdAt: ago(90), updatedAt: ago(20) }, { isQuestionAuthor: true }),
     answerPost({ answerId: 2, body: "Seen by the question author: the check selects this one.", isAccepted: false, authorName: "me20b017", createdAt: ago(50), updatedAt: ago(50) }, { isQuestionAuthor: true, onAccept: () => {}, mine: false }),

@@ -11,13 +11,14 @@ import { highlight } from "../highlight.js";
 
 /** One answer as a post. Handlers are optional (the style guide renders it without a server). */
 export function answerPost(a, { isQuestionAuthor = false, mine = false, onAccept, onEdit } = {}) {
-  const gutter = a.isAccepted ? acceptedMark() : isQuestionAuthor && onAccept ? acceptButton(() => onAccept(a)) : null;
+  const gutter = !a.isAccepted && isQuestionAuthor && onAccept ? acceptButton(() => onAccept(a)) : null;
   return post({
     id: anchorId("answer", a.answerId),
     className: a.isAccepted ? "post--accepted" : "",
+    head: a.isAccepted ? acceptedMark() : null,
     gutter,
     text: a.body,
-    actions: mine && onEdit ? linkButton("edit", () => onEdit(a), { "aria-label": "Edit your answer" }) : null,
+    actions: mine && onEdit ? linkButton("Edit answer", () => onEdit(a), { "aria-label": "Edit your answer" }) : null,
     sign: signature({ verb: "answered", createdAt: a.createdAt, updatedAt: a.updatedAt, authorName: a.authorName }),
   });
 }
@@ -88,7 +89,7 @@ export function mountAnswers(container, { question, me, onQuestionChange }) {
         highlight(list.querySelector("#" + anchorId("answer", answer.answerId)));
       },
     });
-    el.replaceChildren(h("div", { class: "post-body" }, form));
+    el.replaceChildren(h("div", { class: "post-body" }, h("p", { class: "edit-label" }, "Edit your answer"), form));
     area.focus();
   }
 

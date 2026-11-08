@@ -13,7 +13,7 @@ import { timeEl } from "../components/time-el.js";
 import { showError, clearMessage } from "../components/message-bar.js";
 import { mountComments } from "../components/comment-tree.js";
 import { mountAnswers } from "../components/answers.js";
-import { questionHref } from "../components/question-row.js";
+import { questionHref, statusPill } from "../components/question-row.js";
 import { highlightFromHash } from "../highlight.js";
 
 const user = await mountHeader("question");
@@ -46,9 +46,10 @@ async function start() {
   // ---- status line: asked / modified / resolved. Rebuilt whenever the question changes (e.g. an answer is accepted).
   const status = h("p", { class: "status-line", id: "status-line" });
   const renderStatus = () => {
-    setChildren(status, "asked ", timeEl(question.createdAt),
-      differs(question.createdAt, question.updatedAt) ? [" · modified ", timeEl(question.updatedAt)] : null,
-      " · ", question.isResolved ? h("span", { class: "resolved-mark" }, "✓ resolved") : "open");
+    setChildren(status, statusPill(question.isResolved),
+      h("span", {}, "asked ", timeEl(question.createdAt)),
+      differs(question.createdAt, question.updatedAt) ? [h("span", { class: "dot", "aria-hidden": "true" }, "•"), h("span", {}, "modified ", timeEl(question.updatedAt))] : null,
+      h("span", { class: "dot", "aria-hidden": "true" }, "•"), h("span", {}, "by ", question.authorName || "unknown"));
   };
   renderStatus();
 
@@ -80,12 +81,13 @@ async function start() {
   const answersSection = h("section", { id: "answers-section", "aria-label": "Answers" });
 
   setChildren(content,
-    h("div", { class: "page-head" }, h("h1", { class: "q-title-page", id: "question-title" }, question.title), h("a", { class: "btn btn-primary", href: "/ask.html" }, "Ask Question")),
+    h("a", { class: "back-link", href: "/" }, "← All questions"),
+    h("div", { class: "page-head" }, h("div", {}, h("h1", { class: "q-title-page", id: "question-title" }, question.title)), h("a", { class: "btn btn-secondary", href: "/ask.html" }, "+ Ask Question")),
     status,
     post({
       id: "question-post", gutter, text: question.body,
       extra: h("div", { class: "post-extra" }, tagList(question.tags)),
-      actions: mine ? h("a", { href: "/ask.html?edit=" + toId(String(question.questionId)), id: "edit-question" }, "edit") : null,
+      actions: mine ? h("a", { href: "/ask.html?edit=" + toId(String(question.questionId)), id: "edit-question" }, "Edit question") : null,
       sign: signature({ verb: "asked", createdAt: question.createdAt, updatedAt: question.updatedAt, authorName: question.authorName }),
     }),
     commentsSection, answersSection);

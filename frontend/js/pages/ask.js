@@ -52,7 +52,14 @@ async function start() {
     hint: "Say what you tried and what you expected." });
   const submit = h("button", { type: "submit", class: "btn btn-primary", id: "submit-question" }, existing ? "Save Edits" : "Post Your Question");
   const cancel = h("a", { class: "btn btn-secondary", href: existing ? questionHref(existing.questionId) : "/" }, "Cancel");
-  const form = h("form", { id: "question-form", novalidate: true }, title.element, picker.element, body.element, h("div", { class: "button-row" }, submit, cancel));
+  const form = h("form", { id: "question-form", class: "form-card", novalidate: true }, title.element, picker.element, body.element, h("div", { class: "button-row" }, submit, cancel));
+  const tips = h("aside", { class: "tips", "aria-label": "Tips for a good question" },
+    h("p", {}, "Tips for a quick answer"),
+    h("ul", {},
+      h("li", {}, "Search first — someone may have solved it already."),
+      h("li", {}, "Put the exact problem in the title."),
+      h("li", {}, "Say what you tried and what you expected."),
+      h("li", {}, "Pick the tags that fit, so the right people see it.")));
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -75,7 +82,10 @@ async function start() {
     });
   });
 
-  setChildren(content, h("div", { class: "page-head" }, h("h1", {}, existing ? "Edit your question" : "Ask a question")), form);
+  setChildren(content,
+    h("div", { class: "page-head" }, h("div", {}, h("h1", {}, existing ? "Edit your question" : "Ask a question"),
+      h("p", { class: "lede" }, existing ? "Update the title, description or tags. Everyone sees the new version." : "Describe the problem clearly; good questions get answered faster."))),
+    h("div", { class: "ask-layout" }, form, tips));
   title.input.focus();
 }
 

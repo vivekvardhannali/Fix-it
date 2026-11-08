@@ -2,43 +2,52 @@ import { h } from "../dom.js";
 import { toId } from "../util.js";
 import { differs } from "../time.js";
 import { timeEl } from "./time-el.js";
+import { avatar } from "./avatar.js";
 
 /**
- * The light-blue box at the bottom of a post: "asked 3 hours ago", optional "edited 20 mins ago", and the author.
+ * Author row at the bottom of a post: avatar, the author, "asked 3 hours ago" and an optional "edited 20 mins ago".
  * verb: "asked" | "answered".
  */
 export function signature({ verb, createdAt, updatedAt, authorName }) {
+  const name = authorName || "unknown";
   return h("div", { class: "signature" },
-    h("span", { class: "when" }, verb + " ", timeEl(createdAt)),
-    differs(createdAt, updatedAt) ? h("span", { class: "when" }, "edited ", timeEl(updatedAt)) : null,
-    h("span", { class: "author" }, authorName || "unknown"));
+    avatar(name),
+    h("div", { class: "sig-text" },
+      h("span", { class: "author" }, name),
+      h("span", { class: "when" }, verb + " ", timeEl(createdAt),
+        differs(createdAt, updatedAt) ? [" · edited ", timeEl(updatedAt)] : null)));
 }
 
-/** Layout of one post: gutter (interaction column) | body text, then a footer with actions and the signature. */
-export function post({ id, gutter, text, extra, actions, sign, className = "" }) {
+/** Layout of one post (a card): body text and extras, then a footer with the interaction control, actions and the author row. */
+export function post({ id, head, gutter, text, extra, actions, sign, className = "" }) {
   return h("div", { class: ("post " + className).trim(), id },
-    h("div", { class: "post-gutter" }, gutter),
+    head ? h("div", { class: "post-head" }, head) : null,
     h("div", { class: "post-body" },
       h("div", { class: "post-text" }, text),
-      extra,
-      h("div", { class: "post-foot" }, h("div", { class: "post-actions" }, actions), sign)));
+      extra),
+    h("div", { class: "post-foot" },
+      h("div", { class: "post-actions" }, h("div", { class: "post-gutter" }, gutter), actions),
+      sign));
 }
 
-/** The big "+" box in a question's gutter: "I want this answered too". Pressed state comes from the server's answer. */
+/** The "+" pill on a question: "I want this answered too". Pressed state comes from the server's answer. */
 export function plusButton({ count, pressed, onClick, disabled = false }) {
   return h("button", { type: "button", class: "plus-btn", id: "plus-button", "aria-pressed": pressed ? "true" : "false", disabled: disabled || undefined,
     "aria-label": `Plus: ${count} people want this answered${pressed ? ", including you" : ""}`, title: "I want this answered too", onClick },
-    h("span", { class: "glyph", "aria-hidden": "true" }, "+"), h("span", { class: "count" }, String(count)), h("span", { class: "label" }, "plus"));
+    h("span", { class: "glyph", "aria-hidden": "true" }, pressed ? "✓" : "+"), h("span", { class: "count" }, String(count)),
+    h("span", { class: "label" }, pressed ? "You want this answered" : "I want this answered too"));
 }
 
-/** Green check shown on the accepted answer. */
+/** Green badge shown on the accepted answer. */
 export function acceptedMark() {
-  return h("div", { class: "accepted-mark", role: "img", "aria-label": "Accepted answer", title: "The question author accepted this answer" }, "✓");
+  return h("div", { class: "accepted-mark", role: "img", "aria-label": "Accepted answer", title: "The question author accepted this answer" },
+    h("span", { class: "tick", "aria-hidden": "true" }, "✓"), h("span", { "aria-hidden": "true" }, "Accepted solution"));
 }
 
-/** Check button only the question's author sees on an answer. */
+/** Button only the question's author sees on an answer. */
 export function acceptButton(onClick) {
-  return h("button", { type: "button", class: "accept-btn", "aria-label": "Select as the correct answer", title: "Select as the correct answer", onClick }, "✓");
+  return h("button", { type: "button", class: "accept-btn", "aria-label": "Select as the correct answer", title: "Select as the correct answer", onClick },
+    h("span", { class: "tick", "aria-hidden": "true" }, "✓"), "Accept as solution");
 }
 
 /** Anchor id of an item ("comment-12"), or undefined when the id is not a valid number. */

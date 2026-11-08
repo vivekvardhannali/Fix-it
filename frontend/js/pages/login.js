@@ -82,7 +82,7 @@ toSignup.addEventListener("click", () => show("signup"));
 toLogin.addEventListener("click", () => show("login"));
 
 setChildren(card,
-  h("h1", {}, "Fix It"),
+  h("h1", {}, "Welcome to Fix It"),
   h("p", { class: "tagline" }, "Ask. Search. Get it fixed."),
   messages, loginForm, signupForm, h("hr"), switchRow);
 setChildren(switchRow, "New here? ", toSignup);

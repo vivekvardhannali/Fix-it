@@ -37,8 +37,12 @@ async function load() {
     ["hybrid", "semantic", "lexical"].map((m) => [m === modeParam ? h("strong", { "aria-current": "true" }, m) : h("a", { href: searchHref({ tags: selected, mode: m }) }, m), " "])) : null;
 
   const problem = validateSearchQuery(q);
-  setChildren(content, h("div", { class: "page-head" }, h("h1", {}, q ? ["Search results for “", q, "”"] : "Search"), h("a", { class: "btn btn-secondary", href: "/ask.html" + buildQuery({ title: q, tags: selected }) }, "Ask Question")),
-    modeSwitch, tagFilter({ tags: allTags, selected, onToggle: toggle }), h("div", { id: "results" }));
+  const filter = tagFilter({ tags: allTags, selected, onToggle: toggle });
+  filter.prepend(h("span", { class: "filter-label", "aria-hidden": "true" }, "Within tags"));
+  setChildren(content, h("div", { class: "page-head" },
+    h("div", {}, h("h1", {}, q ? ["Search results for “", q, "”"] : "Search"), h("p", { class: "lede" }, "Questions similar to what you typed, most relevant first.")),
+    h("a", { class: "btn btn-secondary", href: "/ask.html" + buildQuery({ title: q, tags: selected }) }, "Ask Question")),
+    modeSwitch, h("div", { class: "list-toolbar" }, filter), h("div", { id: "results" }));
   const results = document.getElementById("results");
 
   if (problem) {                                       // empty/too long: say so before sending anything

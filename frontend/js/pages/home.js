@@ -41,11 +41,13 @@ async function load() {
     const next = selected.includes(name) ? selected.filter((t) => t !== name) : [...selected, name];
     location.assign(hrefFor(next));
   };
-  const head = h("div", { class: "page-head" }, h("h1", {}, "Questions"), h("a", { class: "btn btn-primary", href: "/ask.html" }, "Ask Question"));
-  const intro = h("p", { class: "subtle", id: "home-intro" },
+  const intro = h("p", { class: "lede", id: "home-intro" },
     selected.length ? "Questions with any of the selected tags, most + first." : "All questions, most + first. Pick tags to narrow them down.");
+  const head = h("div", { class: "page-head" }, h("div", {}, h("h1", {}, "Questions"), intro), h("a", { class: "btn btn-primary", href: "/ask.html" }, "+ Ask Question"));
   const list = h("div", { id: "question-list" }, h("p", { class: "loading" }, "Loading…"));
-  setChildren(content, head, intro, tagFilter({ tags: allTags, selected, onToggle: toggle }), list);
+  const toolbar = h("div", { class: "list-toolbar" }, h("div", { class: "tag-filter-wrap" }, tagFilter({ tags: allTags, selected, onToggle: toggle })));
+  toolbar.querySelector(".tag-filter").prepend(h("span", { class: "filter-label", "aria-hidden": "true" }, "Filter"));
+  setChildren(content, head, toolbar, list);
 
   try {
     const result = await api.listQuestions({ tags: selected, page });
