@@ -62,7 +62,7 @@
 /* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; font: 15px/1.55 var(--font); color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+body { margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; font: 15px/1.55 var(--font); color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { margin: 0; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em; color: var(--text); }
 p { margin: 0 0 10px; }
 a { color: var(--link); text-decoration: none; }
@@ -138,7 +138,8 @@ a.dropdown-item { text-decoration: none; color: var(--text); }
 .avatar--c4 { background: #0369a1; } .avatar--c5 { background: #6d28d9; } .avatar--c6 { background: #0f766e; } .avatar--c7 { background: #475569; }
 
 /* ---------- page frame ---------- */
-main { min-height: 64vh; }
+/* body is a full-height column: main takes the spare height so the footer sits at the bottom of short pages */
+main { flex: 1 0 auto; }
 main.container { padding-top: 32px; padding-bottom: 56px; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
 .page-head h1 { font-size: 28px; overflow-wrap: anywhere; }

@@ -103,7 +103,7 @@ function buildProfile(user, { live = true } = {}) {
     avatar(name), h("span", { class: "profile-name" }, name), chevronIcon());
   const panel = h("div", { class: "dropdown", id: "profile-panel", hidden: true },
     h("div", { class: "dropdown-meta" }, avatar(name, { size: "lg" }),
-      h("div", { class: "who" }, h("div", { class: "who-name" }, name), h("div", {}, user.smail), h("div", {}, "User ID: ", h("strong", { id: "profile-user-id" }, String(user.userId))))),
+      h("div", { class: "who" }, h("div", { class: "who-name" }, name), h("div", {}, user.smail))),
     h("a", { class: "dropdown-item", href: "/profile.html" }, "My Questions"),
     h("button", { type: "button", class: "dropdown-item", id: "logout-button", onClick: () => (live ? logout() : undefined) }, "Log out"));
   makeMenu(button, panel);

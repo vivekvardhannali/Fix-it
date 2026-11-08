@@ -79,7 +79,7 @@ can still surface unrelated questions at the bottom (hybrid ≈ 0.54).
 | FD4 | ~~Time zones~~ **Decided: IST; timestamps carry `+05:30`** | | |
 | FD5 | Notifications are a **bell dropdown only** (no separate page), refreshed every 60 s | Add a full notifications page | |
 | FD6 | Question rows show only what the design lists: title, few lines, tags, resolved box, `+` box (no answer counts) | Add answer count (needs backend change) | |
-| FD7 | Profile dropdown shows the numeric **User ID** plus your own smail, and **My Questions** | | |
+| FD7 | ~~Numeric User ID in the profile menu~~ **Decided: not shown.** Dropdown shows name, own smail, **My Questions**, Log out | | |
 | FD8 | Hidden tuning view `search.html?...&debug=1` shows mode switch + semantic/lexical/final scores for tuning the hybrid weight | Remove | |
 | FD9 | ~~Question form requires at least 1 tag~~ **Done in the backend too**: 1-4 tags from the fixed set | | |
 | FD10 | Not built (not in the design): Users/Badges/Tags pages, reputation, delete, markdown, dark mode | | |
@@ -88,7 +88,7 @@ can still surface unrelated questions at the bottom (hybrid ≈ 0.54).
 
 The whole frontend (phases F0-F12 of the frontend design document) is built: 60 unit + 75 browser tests pass. What differs from the document and what
 is not verified (Firefox/Safari, live semantic search through the screens, a real phone) is listed in section 13 of
-`Specifications_and_designs/Fix_It_Frontend_Design_Document.md`. Open choices for you: FD7 (profile menu shows numeric User ID + own smail - built that way),
+`Specifications_and_designs/Fix_It_Frontend_Design_Document.md`. Open choices for you:
 FD8 (hidden `&debug=1` tuning view on the search page - built), and everything in section 2 above that was already pending (D9, D13, D14, D19).
 
 ## 3. Verified only with fakes (be aware)
