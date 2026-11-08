@@ -75,10 +75,12 @@ function buildBell({ live = true, unread = 0, sample = [] } = {}) {
   const loadList = async () => {
     setChildren(panel, h("div", { class: "dropdown-head" }, "Notifications"), h("div", { class: "dropdown-note" }, "Loading…"));
     try {
-      const list = live ? await api.notifications({ limit: 10 }) : sample;
+      // unread only: once read, a notification drops out so older unread ones move up into the panel.
+      // limit 99 matches the badge, which caps at "99+".
+      const list = live ? await api.notifications({ limit: 99, unreadOnly: true }) : sample;
       setChildren(panel, h("div", { class: "dropdown-head" }, "Notifications"),
         list.length === 0
-          ? h("div", { class: "dropdown-note" }, "No notifications")
+          ? h("div", { class: "dropdown-note" }, "No new notifications")
           : list.map((n) => h("button", { type: "button", class: "dropdown-item notice" + (n.isRead ? "" : " unread"), onClick: () => openNotice(n) },
             h("span", { class: "notice-text" }, noticeText(n)), h("span", { class: "notice-time" }, timeEl(n.createdAt)))));
       refreshCount();
