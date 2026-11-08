@@ -60,7 +60,7 @@ public class AuthController {
     }
 
     private void startSession(User user, HttpServletRequest request, HttpServletResponse response) {
-        var principal = new PasswordFixItPrincipal(user.getId(), user.getUsername() != null ? user.getUsername() : user.getSmail());
+        var principal = new PasswordFixItPrincipal(user.getId(), user.getUsername());
         var authentication = UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities());
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
@@ -73,7 +73,6 @@ public class AuthController {
 
     /** The cookie session is always started; when per-tab sessions are on, a token for this tab is handed out as well. */
     private AuthTokenResponse toResponse(User user) {
-        String name = user.getUsername() != null ? user.getUsername() : user.getSmail();
-        return new AuthTokenResponse(user.getId(), user.getUsername(), user.getSmail(), tabSessions.issue(user.getId(), name));
+        return new AuthTokenResponse(user.getId(), user.getUsername(), user.getSmail(), tabSessions.issue(user.getId(), user.getUsername()));
     }
 }

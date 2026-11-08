@@ -28,7 +28,6 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
@@ -59,9 +58,9 @@ class AuthorizationAuditTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        a = authentication(TestAuth.as(users.save(new User("a@smail.iitm.ac.in"))));
-        b = authentication(TestAuth.as(users.save(new User("b@smail.iitm.ac.in"))));
-        c = authentication(TestAuth.as(users.save(new User("c@smail.iitm.ac.in"))));
+        a = authentication(TestAuth.as(users.save(TestUsers.user("a@smail.iitm.ac.in"))));
+        b = authentication(TestAuth.as(users.save(TestUsers.user("b@smail.iitm.ac.in"))));
+        c = authentication(TestAuth.as(users.save(TestUsers.user("c@smail.iitm.ac.in"))));
         questionId = create("/api/questions", a, "{\"title\":\"t\",\"body\":\"b\",\"tags\":[\"tech\"]}", "questionId");
         answerId = create("/api/questions/" + questionId + "/answers", b, "{\"body\":\"answer\"}", "answerId");
         commentId = create("/api/questions/" + questionId + "/comments", b, "{\"body\":\"comment\"}", "commentId");

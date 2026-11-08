@@ -39,7 +39,7 @@ class QuestionEmbeddingTest {
     @BeforeEach
     void setUp() {
         fake.reset();
-        author = users.save(new User("alice@smail.iitm.ac.in"));
+        author = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
     }
 
     private Question question(String title, String body) {

@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.AnswerRepository;
 import com.fixit.repository.UserRepository;
 
@@ -38,8 +37,8 @@ class AnswerApiTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        userA = authentication(TestAuth.as(users.save(new User("a@smail.iitm.ac.in"))));
-        userB = authentication(TestAuth.as(users.save(new User("b@smail.iitm.ac.in"))));
+        userA = authentication(TestAuth.as(users.save(TestUsers.user("a@smail.iitm.ac.in"))));
+        userB = authentication(TestAuth.as(users.save(TestUsers.user("b@smail.iitm.ac.in"))));
         questionId = idOf(mvc.perform(post("/api/questions").with(userA).contentType("application/json")
                 .content("{\"title\":\"t\",\"body\":\"b\",\"tags\":[\"tech\"]}")).andReturn().getResponse().getContentAsString(), "questionId");
     }

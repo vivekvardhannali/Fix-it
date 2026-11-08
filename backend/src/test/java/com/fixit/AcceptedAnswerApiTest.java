@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
@@ -42,9 +41,9 @@ class AcceptedAnswerApiTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        userA = authentication(TestAuth.as(users.save(new User("a@smail.iitm.ac.in"))));
-        userB = authentication(TestAuth.as(users.save(new User("b@smail.iitm.ac.in"))));
-        userC = authentication(TestAuth.as(users.save(new User("c@smail.iitm.ac.in"))));
+        userA = authentication(TestAuth.as(users.save(TestUsers.user("a@smail.iitm.ac.in"))));
+        userB = authentication(TestAuth.as(users.save(TestUsers.user("b@smail.iitm.ac.in"))));
+        userC = authentication(TestAuth.as(users.save(TestUsers.user("c@smail.iitm.ac.in"))));
         questionId = create("/api/questions", userA, "{\"title\":\"t\",\"body\":\"b\",\"tags\":[\"tech\"]}", "questionId");
         answerId = create("/api/questions/" + questionId + "/answers", userB, "{\"body\":\"fix\"}", "answerId");
     }

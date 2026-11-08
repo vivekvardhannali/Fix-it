@@ -61,8 +61,8 @@ class SearchApiTest {
     @BeforeEach
     void setUp() {
         fake.reset();
-        User alice = users.save(new User("alice@smail.iitm.ac.in"));
-        bob = authentication(TestAuth.as(users.save(new User("bob@smail.iitm.ac.in"))));
+        User alice = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
+        bob = authentication(TestAuth.as(users.save(TestUsers.user("bob@smail.iitm.ac.in"))));
         q1 = make(alice, "WiFi keeps disconnecting in hostel", "my laptop loses wifi connection every hour in hostel block", "tech");
         q2 = make(alice, "Cannot connect to hostel WiFi", "laptop wifi disconnects hostel connection", "tech", "others");
         q3 = make(alice, "How to register for electives", "course registration electives deadline portal", "math");

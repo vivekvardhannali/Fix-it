@@ -18,11 +18,11 @@ for from you*, not code. Nothing is committed to git.
 
 | # | What | Where it plugs in | Effect until supplied | Your answer / notes |
 |---|---|---|---|---|
-| W1 | **PARKED (Google sign-in is off; password login is used for now).** Google OAuth client ID + secret (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`); redirect URI to register: `http://localhost:8080/login/oauth2/code/google` | env vars | Real Google sign-in cannot work (login redirects to Google, which rejects the placeholder). All tests simulate Google | |
+| W1 | ~~Google OAuth credentials~~ **No longer needed: Google sign-in was removed (D24)** | | | |
 | W2 | ~~Embedding provider~~ **DONE: Jina AI, `jina-embeddings-v4`, 2048 dims**; key in `backend/.env.local` (run with `backend/run-local.sh`). Consider rotating the key (it was pasted in chat) | env vars + `JinaEmbeddingService` (written) | Works. Existing questions (none yet) need `EMBEDDING_REINDEX_ON_STARTUP=true` once | |
 | W3 | **Search tuning, found by experimentation**: `SEARCH_SEMANTIC_WEIGHT` (your hybrid fraction), `SEARCH_HYBRID_THRESHOLD`, optionally `SEARCH_SEMANTIC_THRESHOLD`, `SEARCH_LEXICAL_THRESHOLD` | env vars | Search returns 503 rather than guessing a value | |
 | W4 | Database password / URL / user if not the local default | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | Works locally as-is | |
-| W5 | Frontend URL (`FRONTEND_URL`), HTTPS/hosting details (needed for the `Secure` cookie flag and CORS) | env var + a config change | Defaults assume `http://localhost:3000` | |
+| W5 | HTTPS/hosting details (needed for the `Secure` cookie flag and CORS) | env var + a config change | Defaults assume local HTTP | |
 
 **Embedding provider (W2) is done.** `JinaEmbeddingService` calls Jina with `retrieval.passage` for stored questions and
 `retrieval.query` for searches. To switch provider later: write another class extending `AbstractEmbeddingService`, register
@@ -63,8 +63,9 @@ can still surface unrelated questions at the bottom (hybrid ≈ 0.54).
 | D16 | Profile = `GET /api/me` + `GET /api/me/questions` (design lists a Profile module; the roadmap did not) | | |
 | D17 | **DECIDED: tags are a fixed set — `tech`, `math`, `code`, `others`.** Users pick from them when asking/editing; a question needs **1 to 4**; nobody can create tags; unknown tags are rejected everywhere (ask, edit, homepage filter, search). The set lives in config (`app.tags.allowed` / `ALLOWED_TAGS`) and is seeded into the `tags` table at startup | Different/more tags later = change the config, no code | |
 | D21 | **DECIDED: Indian Standard Time.** The app forces IST (`Asia/Kolkata`) and every API timestamp carries `+05:30` | | |
-| D18 | **Login is username + password for now** (Google off, code kept). Register with username + IITM smail + password; log in with username **or** smail. BCrypt hashes only (new nullable `username` / `password_hash` columns on `users` — a **deviation** from the database design, which stores no password) | Google is the intended final method | |
-| D19 | **The smail typed at sign-up is not verified** (no email is sent): anyone can register any untaken `@smail.iitm.ac.in` address, and that name is then taken. A Google-created account's smail cannot be claimed this way (409) | Verify by email, or switch Google back on before real users | |
+| D18 | **Login is username + password** (the only method; Google removed, see D24). Register with username + IITM smail + password; log in with username **or** smail. BCrypt hashes only (`username` / `password_hash` columns on `users`, both `NOT NULL` — a **deviation** from the database design, which stores no password) | | |
+| D24 | **DECIDED 2026-11-08: Google sign-in removed** (code, dependency, settings and tests). Every account has a username and password, so names are never shown as `user<id>`. Existing databases: run `backend/db/migrate_2026-11-08_username_required.sql` once | | |
+| D19 | **The smail typed at sign-up is not verified** (no email is sent): anyone can register any untaken `@smail.iitm.ac.in` address, and that name is then taken. | Verify by email before real users | |
 | D20 | Passwords: 8-72 bytes, any characters, not a common password / the username / the smail name. Failed-login throttle: 5 per account and 20 per IP per 15 min -> 429 (in memory, resets on restart, per server). No password reset / change yet | Add reset/change (needs email or admin) | |
 
 ---
@@ -75,7 +76,7 @@ can still surface unrelated questions at the bottom (hybrid ≈ 0.54).
 |---|---|---|---|
 | FD1 | Frontend is plain **HTML/CSS/JS, no framework, no build step** (as the design doc says), **multi-page**, served by the Spring Boot backend (same origin) - **the hosting is now in place** (`frontend/` folder, placeholder pages) | A framework / separate dev server (would need CORS + CSRF work, see D14) | |
 | FD2 | ~~Backend changes first~~ **All done** (static hosting B1, authorName B4, notification fields B6, CSP B7); B2/B3 dropped (password login exists) | | |
-| FD3 | ~~Author names~~ **Done:** `authorName` = username (or `user<id>`); smail is never shown | | |
+| FD3 | ~~Author names~~ **Done:** `authorName` = username; smail is never shown | | |
 | FD4 | ~~Time zones~~ **Decided: IST; timestamps carry `+05:30`** | | |
 | FD5 | Notifications are a **bell dropdown only** (no separate page), refreshed every 60 s | Add a full notifications page | |
 | FD6 | Question rows show only what the design lists: title, few lines, tags, resolved box, `+` box (no answer counts) | Add answer count (needs backend change) | |
@@ -93,7 +94,6 @@ FD8 (hidden `&debug=1` tuning view on the search page - built), and everything i
 
 ## 3. Verified only with fakes (be aware)
 
-- **Real Google login** — never exercised end to end. Tests simulate the identity Google returns and run Fix It's own code after that.
 - **Semantic quality** — the normal tests use a fake bag-of-words "embedding" (mechanics only). The **real Jina model was exercised
   live** (`JinaLiveTest`, run on demand with `JINA_LIVE_KEY`): real 2048-dim vectors stored and searched, relevant questions
   ranked above unrelated ones on a small sample. Quality on *your* real questions and the tuned weight/thresholds are still to do (W3).

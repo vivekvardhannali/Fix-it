@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 
 /** The app runs on Indian Standard Time and says so in every timestamp it returns. */
@@ -43,7 +42,7 @@ class IstTimestampTest {
 
     @Test
     void everyTimestampInAResponseCarriesThePlus0530Offset_andIsTheCurrentTime() throws Exception {
-        var alice = authentication(TestAuth.as(users.save(new User("alice@smail.iitm.ac.in"))));
+        var alice = authentication(TestAuth.as(users.save(TestUsers.user("alice@smail.iitm.ac.in"))));
         String body = mvc.perform(post("/api/questions").with(alice).contentType("application/json")
                 .content("{\"title\":\"t\",\"body\":\"b\",\"tags\":[\"tech\"]}"))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();

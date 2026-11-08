@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.QuestionRepository;
 import com.fixit.repository.UserRepository;
 
@@ -44,8 +43,8 @@ class TagApiTest {
 
     @BeforeEach
     void setUp() {
-        alice = authentication(TestAuth.as(users.save(new User("alice@smail.iitm.ac.in"))));
-        bob = authentication(TestAuth.as(users.save(new User("bob@smail.iitm.ac.in"))));
+        alice = authentication(TestAuth.as(users.save(TestUsers.user("alice@smail.iitm.ac.in"))));
+        bob = authentication(TestAuth.as(users.save(TestUsers.user("bob@smail.iitm.ac.in"))));
     }
 
     private int ask(RequestPostProcessor as, String tagsJson) throws Exception {

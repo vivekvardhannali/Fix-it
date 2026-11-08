@@ -34,18 +34,16 @@ class AuthorNameTest {
     @Autowired UserRepository users;
     @Autowired ObjectMapper mapper;
 
-    User aliceUser, bobUser, googleUser;
-    RequestPostProcessor alice, bob, google;
+    User aliceUser, bobUser;
+    RequestPostProcessor alice, bob;
     long questionId, commentId;
 
     @BeforeEach
     void setUp() throws Exception {
-        aliceUser = users.save(new User("alice.private@smail.iitm.ac.in", "alice_a", null));
-        bobUser = users.save(new User("bob.private@smail.iitm.ac.in", "bob_b", null));
-        googleUser = users.save(new User("gina.private@smail.iitm.ac.in"));               // no username (e.g. Google sign-in)
+        aliceUser = users.save(new User("alice.private@smail.iitm.ac.in", "alice_a", TestUsers.NO_PASSWORD_HASH));
+        bobUser = users.save(new User("bob.private@smail.iitm.ac.in", "bob_b", TestUsers.NO_PASSWORD_HASH));
         alice = authentication(TestAuth.as(aliceUser));
         bob = authentication(TestAuth.as(bobUser));
-        google = authentication(TestAuth.as(googleUser));
         questionId = id(mvc.perform(post("/api/questions").with(alice).contentType("application/json")
                 .content("{\"title\":\"WiFi keeps dropping\",\"body\":\"b\",\"tags\":[\"tech\"]}")).andReturn().getResponse().getContentAsString(), "questionId");
     }
@@ -84,14 +82,6 @@ class AuthorNameTest {
     void listsShowAuthorNames() throws Exception {
         mvc.perform(get("/api/questions").with(bob)).andExpect(jsonPath("$.items[0].authorName").value("alice_a"));
         mvc.perform(get("/api/me/questions").with(alice)).andExpect(jsonPath("$.items[0].authorName").value("alice_a"));
-    }
-
-    @Test
-    void anAccountWithoutAUsernameShowsUserPlusIdNotItsSmail() throws Exception {
-        long q = id(mvc.perform(post("/api/questions").with(google).contentType("application/json")
-                .content("{\"title\":\"t\",\"body\":\"b\",\"tags\":[\"tech\"]}")).andReturn().getResponse().getContentAsString(), "questionId");
-        mvc.perform(get("/api/questions/" + q).with(bob))
-                .andExpect(jsonPath("$.authorName").value("user" + googleUser.getId()));
     }
 
     @Test

@@ -32,14 +32,14 @@ you export the key in your shell. Live check on demand: `JINA_LIVE_KEY=<key> mvn
 - `POST /api/auth/register` / `POST /api/auth/login` (public) -> `AccountService` -> session. `AuthController.startSession` saves the
   security context **explicitly** into the HTTP session (Spring Security 6 no longer does it automatically for custom logins) and
   changes the session id (fixation). Principal = `PasswordFixItPrincipal` (id + display name only; no hash in the session).
-  Controllers use the interface `FixItPrincipal`; `GoogleFixItPrincipal` is the Google flavour (only if `app.auth.google-enabled=true`).
+  Controllers use the interface `FixItPrincipal`.
 - Passwords: BCrypt; max 72 *bytes* (BCrypt ignores the rest); failures are uniform + equal-time (dummy hash compare); `LoginThrottle`
   limits failures (5/account, 20/IP per 15 min; in memory; tests call `throttle.clear()` because it is a singleton shared by a context).
-- `users.username` / `users.password_hash` are new nullable columns (apply `db/schema.sql` changes to a live DB by hand). Deviates from the
-  database design doc (no password stored) - recorded as D18.
-- **Bug found by the Google tests:** when Google is enabled, permit-rules must be added *before* `anyRequest().authenticated()`
-  (Spring throws "Can't configure mvcMatchers after anyRequest"). `SecurityConfig` builds the list in order; `AuthenticationTest`
-  runs with `app.auth.google-enabled=true` so this path stays covered.
+- `users.username` / `users.password_hash` are `NOT NULL` (every account has both). Deviates from the database design doc (no password
+  stored) - recorded as D18. Databases created before 2026-11-08 need `db/migrate_2026-11-08_username_required.sql` once.
+- **Google sign-in was removed on 2026-11-08** (D24): the OAuth dependency, `FixItOidcUserService`, `GoogleFixItPrincipal`,
+  `UserProvisioningService`, `AccountNotAllowedException`, the `GOOGLE_*` / `FRONTEND_URL` settings and the Google tests are gone.
+  Tests create users with `TestUsers.user(smail)` (random-suffixed username, unusable password hash).
 - Mutation-checked (broke code on purpose, confirmed the test fails, restored): any-password-accepted, no new session id on login,
   throttle not consulted, password stored in plain text.
 
@@ -96,7 +96,7 @@ you export the key in your shell. Live check on demand: `JINA_LIVE_KEY=<key> mvn
   script could exhaust the quota. Not built: a global cap on embedding calls per day.
 
 ## Author names
-- Responses carry `authorName` = `User.getDisplayName()` = username, else `user<id>`; the smail is never returned (`AuthorNameTest`
+- Responses carry `authorName` = `User.getDisplayName()` = username; the smail is never returned (`AuthorNameTest`
   checks several endpoints for any `@smail` text). Notifications also carry `questionTitle` and `actorName`.
 
 ## Per-tab sessions (TESTING-CONVENIENCE, decision D23)
@@ -128,9 +128,8 @@ sample data (`node frontend/test/seed.mjs`), run `node frontend/test/seed.mjs --
   Lesson: assert persistence with raw SQL (`JdbcTemplate`) after `em.flush()`, not only through the API/JPA, since
   tests share one persistence context.
 - Services return DTOs (not entities): `open-in-view=false`, so lazy collections must be read inside the transaction.
-- Auth = Google OIDC -> `FixItOidcUserService` -> `UserProvisioningService` (verified email + exact
-  `@smail.iitm.ac.in` domain match) -> session cookie. Controllers get the user via `@AuthenticationPrincipal FixItPrincipal`
-  (`getUserId()`). Tests skip Google using `TestAuth.as(user)`.
+- Auth = username + password (`AccountService`; exact `@smail.iitm.ac.in` domain match at sign-up) -> session cookie. Controllers
+  get the user via `@AuthenticationPrincipal FixItPrincipal` (`getUserId()`). Tests skip the login step using `TestAuth.as(user)`.
 - CSRF is disabled on purpose (HttpOnly + SameSite=Lax cookie, JSON-only API). See `PLACEHOLDERS_TO_CHANGE.md`.
 - Multiple answers per question are allowed (question author may also answer); only the answer's author can edit it.
 - Accepted answer: `PUT /api/questions/{id}/accepted-answer {answerId}`. Question author only (403 for everyone else,
@@ -185,13 +184,12 @@ sample data (`node frontend/test/seed.mjs`), run `node frontend/test/seed.mjs --
 | `release version 21 not supported` | Wrong JAVA_HOME (see top) |
 | `Failed to determine a suitable driver class` | No datasource config; set `DB_URL` etc. (defaults in application.properties) |
 | Every `/api/**` call is 401 | Not logged in; only `/api/ping` and `/api/health/**` are public |
-| Login redirect to Google fails with "invalid_client" | Still using placeholder `GOOGLE_CLIENT_ID/SECRET` |
 | `FATAL: sorry, too many clients already` / `Unable to determine Dialect without JDBC metadata` while running tests | Every distinct test configuration is a cached Spring context with its own DB pool (default 10) and PostgreSQL allows 100. Tests cap the pool (`SPRING_DATASOURCE_HIKARI_*` in the surefire config). Hit when adding ~15 test contexts |
 | `LazyInitializationException` | Mapping an entity to a DTO outside the service transaction |
 | Tags/rows missing after "successful" test | Check with raw SQL after `em.flush()` |
 
 ## Progress (roadmap: Specifications_and_designs/Fix_It_Backend_Implementation_Roadmap.md)
-**All 23 backend phases are coded; 238 backend tests pass (2 live-Jina tests are skipped unless `JINA_LIVE_KEY` is set).** Login is now username + password (Google off). Not committed to git. What is left is information from the owner, not code:
+**All 23 backend phases are coded; 238 backend tests pass (2 live-Jina tests are skipped unless `JINA_LIVE_KEY` is set).** Login is username + password (Google sign-in removed 2026-11-08; the test count has changed since). Not committed to git. What is left is information from the owner, not code:
 see `NOTES_AND_OPEN_DECISIONS.md` (waiting-for list + decisions to confirm) and `PLACEHOLDERS_TO_CHANGE.md`.
 Working agreement used earlier: two phases at a time, then ask (the owner lifted it for the final run: "code the remaining parts").
 
@@ -200,9 +198,9 @@ Working agreement used earlier: two phases at a time, then ask (the owner lifted
 - [x] PostgreSQL connection works - `DatabaseConnectionTest`, `/api/health/db`
 - [x] pgvector is available - `DatabaseConnectionTest`
 - [x] All 9 database tables work (+ the 10th derived `question_embeddings`) - `JpaMappingTest`, `db/checkpoint3_test_data.sql`
-- [~] Google authentication works - **simulated only**; real Google needs credentials (W1). Verified: domain/verified-email rules, user find-or-create, redirect to Google, failure redirect, 401s - `AuthenticationTest`, `EndToEndFlowTest`
-- [x] IITM smail identity handled correctly - `AuthenticationTest`
-- [x] User creation/retrieval - `AuthenticationTest`, `EndToEndFlowTest`
+- [x] Authentication works - username + password (Google sign-in removed 2026-11-08). Verified: smail domain rule, unique username/smail, 401s, logout - `PasswordAuthTest`, `AuthenticationTest`, `EndToEndFlowTest`
+- [x] IITM smail identity handled correctly - `PasswordAuthTest`
+- [x] User creation/retrieval - `PasswordAuthTest`, `EndToEndFlowTest`
 - [x] Question CRUD / tags / answers / accepted answer / comments / voting / `+` / notifications - one test class each + `EndToEndFlowTest`
 - [~] Embeddings work - **mechanics verified with a fake provider** (`QuestionEmbeddingTest`, `EmbeddingCommittedFlowTest`); real provider pending (W2)
 - [~] Semantic search / threshold / ranking - mechanics verified (`SemanticSearchTest`); quality needs the real model
@@ -213,7 +211,7 @@ Working agreement used earlier: two phases at a time, then ask (the owner lifted
 - [x] Ownership checks - `AuthorizationAuditTest` (route enumeration + matrix; mutation-tested)
 - [x] Error handling - `ErrorHandlingTest` (success/invalid/unauthorised/missing for every major API; leak check; mutation-tested)
 - [x] Full end-to-end backend flow - `EndToEndFlowTest` (real commits)
-- [x] Real application smoke run: starts, protected routes return 401 JSON, Google redirect works
+- [x] Real application smoke run: starts, protected routes return 401 JSON
 
 ### Phase 19-23 notes
 - Search endpoint `GET /api/search` -> `SearchService.searchQuestions(mode, q, tags)`. Tags are read raw from the request

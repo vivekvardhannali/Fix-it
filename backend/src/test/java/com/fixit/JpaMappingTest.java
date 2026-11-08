@@ -41,7 +41,7 @@ class JpaMappingTest {
 
     @Test
     void createAndReadUser() {
-        Long id = users.save(new User("alice@smail.iitm.ac.in")).getId();
+        Long id = users.save(TestUsers.user("alice@smail.iitm.ac.in")).getId();
         flushAndClear();
 
         User found = users.findById(id).orElseThrow();
@@ -52,7 +52,7 @@ class JpaMappingTest {
 
     @Test
     void createAndReadQuestionBack() {
-        User alice = users.save(new User("alice@smail.iitm.ac.in"));
+        User alice = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
         Long id = questions.save(new Question(alice, "WiFi drops", "Disconnects often")).getId();
         flushAndClear();
 
@@ -68,8 +68,8 @@ class JpaMappingTest {
 
     @Test
     void fullRelationalGraphRoundTrips() {
-        User alice = users.save(new User("alice@smail.iitm.ac.in"));
-        User bob = users.save(new User("bob@smail.iitm.ac.in"));
+        User alice = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
+        User bob = users.save(TestUsers.user("bob@smail.iitm.ac.in"));
         Question q = questions.save(new Question(alice, "WiFi drops", "Disconnects often"));
 
         // multiple tags per question
@@ -111,7 +111,7 @@ class JpaMappingTest {
 
     @Test
     void tagCanBelongToManyQuestions() {
-        User alice = users.save(new User("alice@smail.iitm.ac.in"));
+        User alice = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
         Tag wifi = tags.save(new Tag("WiFi"));
         Question q1 = questions.save(new Question(alice, "Q1", "b"));
         Question q2 = questions.save(new Question(alice, "Q2", "b"));
@@ -123,7 +123,7 @@ class JpaMappingTest {
 
     @Test
     void databaseRejectsAcceptedAnswerFromAnotherQuestion() {
-        User alice = users.save(new User("alice@smail.iitm.ac.in"));
+        User alice = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
         Question q1 = questions.save(new Question(alice, "Q1", "b"));
         Question q2 = questions.save(new Question(alice, "Q2", "b"));
         Answer onQ2 = answers.save(new Answer(q2, alice, "answer"));
@@ -133,8 +133,8 @@ class JpaMappingTest {
 
     @Test
     void duplicateSmailRejected() {
-        users.save(new User("alice@smail.iitm.ac.in"));
-        assertThatThrownBy(() -> users.saveAndFlush(new User("alice@smail.iitm.ac.in")))
+        users.save(TestUsers.user("alice@smail.iitm.ac.in"));
+        assertThatThrownBy(() -> users.saveAndFlush(TestUsers.user("alice@smail.iitm.ac.in")))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
@@ -42,9 +41,9 @@ class InterestApiTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        alice = authentication(TestAuth.as(users.save(new User("alice@smail.iitm.ac.in"))));
-        bob = authentication(TestAuth.as(users.save(new User("bob@smail.iitm.ac.in"))));
-        carol = authentication(TestAuth.as(users.save(new User("carol@smail.iitm.ac.in"))));
+        alice = authentication(TestAuth.as(users.save(TestUsers.user("alice@smail.iitm.ac.in"))));
+        bob = authentication(TestAuth.as(users.save(TestUsers.user("bob@smail.iitm.ac.in"))));
+        carol = authentication(TestAuth.as(users.save(TestUsers.user("carol@smail.iitm.ac.in"))));
         String res = mvc.perform(post("/api/questions").with(alice).contentType("application/json")
                 .content("{\"title\":\"t\",\"body\":\"b\",\"tags\":[\"tech\"]}")).andReturn().getResponse().getContentAsString();
         questionId = new ObjectMapper().readTree(res).get("questionId").asLong();

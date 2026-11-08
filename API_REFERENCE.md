@@ -2,8 +2,8 @@
 
 Base URL (local): `http://localhost:8080`. JSON everywhere. **The backend also serves the website** (files from `frontend/`: `/`, `/login.html`, `/css/…`, `/js/…`, `/img/…`) without a login, on the same origin as the API - so cookies just work and no CORS is needed. Page scripts must be external files (a Content-Security-Policy blocks inline scripts and outside sources). **Every endpoint needs a logged-in session except
 `GET /api/ping`, `POST /api/auth/register` and `POST /api/auth/login`.** Not logged in = `401`. Sign up / log in with a
-username and password (below); logout = `POST /api/logout` (204). The session cookie is `JSESSIONID`. (Google sign-in exists in
-the code but is switched off.)
+username and password (below); logout = `POST /api/logout` (204). The session cookie is `JSESSIONID`. This is the
+only way to log in (Google sign-in was removed).
 
 **Per-tab sessions (testing convenience, dev profile only, decision D23):** when `perTabSessions` is true, login/sign-up also return `sessionToken`; send it as `Authorization: Bearer <token>` and it identifies the caller instead of the shared cookie (so two tabs can be two accounts). An unknown/expired token = 401, never the cookie's user. In normal (non-dev) runs `sessionToken` is null and the cookie is the only login.
 
@@ -17,7 +17,7 @@ Errors always look like `{"timestamp","status","error","message"}`. Statuses: 40
 | GET | `/api/health/db`, `/api/health/embedding`, `/api/health/search` | What is configured / still placeholder | Login needed; never shows secrets |
 | POST | `/api/auth/register` | Sign up `{username, smail, password}` → `{userId, username, smail, sessionToken}` and logs in | Public. 201. username 3-30 (`A-Z a-z 0-9 . _ -`), smail must end `@smail.iitm.ac.in` (not email-verified), password 8-72 bytes. 409 if username/smail taken |
 | POST | `/api/auth/login` | `{identifier, password}` (username **or** smail) → `{userId, username, smail, sessionToken}` | Public. 401 `Invalid username or password` for every failure. 429 after 5 failed tries per account (20 per IP) for 15 min |
-| GET | `/api/me` | Current user `{userId, username, smail, perTabSessions}` | `username` is null for Google-created accounts. `perTabSessions` = the testing convenience below is on |
+| GET | `/api/me` | Current user `{userId, username, smail, perTabSessions}` | Every account has a `username`. `perTabSessions` = the testing convenience below is on |
 | GET | `/api/me/questions?page&size` | My questions, newest first | Profile page |
 | GET | `/api/questions?tags=A&tags=B&page&size` | **Homepage discovery**: union of tags, most `+` first | No tags = all. size ≤ 50 |
 | POST | `/api/questions` | Create `{title, body, tags:[…]}` | 201. **At least 1 tag, from the fixed set** (400 otherwise) |
@@ -39,7 +39,7 @@ Errors always look like `{"timestamp","status","error","message"}`. Statuses: 40
 | GET | `/api/tags` | The fixed tag set `[{tagId, name}]`: **tech, math, code, others** (in that order) | Nobody can create tags. Names are case-insensitive on input and always returned lowercase |
 | GET | `/api/search?q=...&tags=A&tags=B&mode=hybrid` | **Search** → `[{questionId, title, bodyPreview, tags, isResolved, interestCount, relevance, semanticScore, lexicalScore}]` | `mode` = hybrid (default) / semantic / lexical. `q` ≤ 500 chars. 503 until search values are configured |
 
-**Author names:** question, answer, comment and list responses carry `authorName` (the username; `user<id>` for an account without one). An author's smail is never returned.
+**Author names:** question, answer, comment and list responses carry `authorName` (the username). An author's smail is never returned.
 
 **Rate limits (429 + `Retry-After`):** search 30/min per user · question create/edit 10/min per user (each makes a paid embedding call) · sign-up 10/hour per IP address. Invalid requests count too. Everything else is unlimited.
 

@@ -53,7 +53,7 @@ class LexicalSearchTest {
 
     @BeforeEach
     void setUp() {
-        author = users.save(new User("alice@smail.iitm.ac.in"));
+        author = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
         q1 = make("WiFi keeps disconnecting in hostel", "my laptop loses wifi connection every hour in hostel block", "Networking");
         q2 = make("Cannot connect to hostel WiFi", "laptop wifi disconnects hostel connection", "Networking", "Hostel");
         q3 = make("How to register for electives", "course registration electives deadline portal", "Academics");

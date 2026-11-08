@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.fixit.dto.QuestionRequest;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 import com.fixit.search.QuestionEmbeddingService;
 import com.fixit.service.QuestionService;
@@ -45,7 +44,7 @@ class EmbeddingNotConfiguredFlowTest {
 
     @Test
     void questionsStillWorkWithoutAProvider() {
-        userId = users.save(new User("flow-unconfigured@smail.iitm.ac.in")).getId();
+        userId = users.save(TestUsers.user("flow-unconfigured@smail.iitm.ac.in")).getId();
         long id = questionService.create(userId, new QuestionRequest("A title", "A body", List.of("tech"))).questionId();
         questionIds.add(id);
         questionService.update(userId, id, new QuestionRequest("A new title", "A body", null));

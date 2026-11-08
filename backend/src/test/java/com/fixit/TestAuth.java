@@ -19,7 +19,7 @@ final class TestAuth {
     }
 
     static Authentication as(User user) {
-        var principal = new PasswordFixItPrincipal(user.getId(), user.getUsername() != null ? user.getUsername() : user.getSmail());
+        var principal = new PasswordFixItPrincipal(user.getId(), user.getUsername());
         return UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities());
     }
 }

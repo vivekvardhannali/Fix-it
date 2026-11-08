@@ -48,13 +48,13 @@ class InterestConcurrencyTest {
 
     @Test
     void concurrentPlusFromManyUsers_countStaysExact() throws Exception {
-        User author = users.save(new User("conc-author@smail.iitm.ac.in"));
+        User author = users.save(TestUsers.user("conc-author@smail.iitm.ac.in"));
         userIds.add(author.getId());
         questionId = questions.save(new Question(author, "t", "b")).getId();
         int n = 12;
         List<Long> voters = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            Long id = users.save(new User("conc-" + i + "@smail.iitm.ac.in")).getId();
+            Long id = users.save(TestUsers.user("conc-" + i + "@smail.iitm.ac.in")).getId();
             userIds.add(id);
             voters.add(id);
         }
@@ -67,7 +67,7 @@ class InterestConcurrencyTest {
 
     @Test
     void sameUserDoubleClickRace_neverDuplicatesAndStaysConsistent() throws Exception {
-        User author = users.save(new User("conc-author2@smail.iitm.ac.in"));
+        User author = users.save(TestUsers.user("conc-author2@smail.iitm.ac.in"));
         userIds.add(author.getId());
         questionId = questions.save(new Question(author, "t", "b")).getId();
 

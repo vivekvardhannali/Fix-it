@@ -20,7 +20,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fixit.entity.Question;
-import com.fixit.entity.User;
 import com.fixit.repository.QuestionRepository;
 import com.fixit.repository.UserRepository;
 
@@ -39,8 +38,8 @@ class QuestionApiTest {
 
     @BeforeEach
     void setUp() {
-        Authentication a = TestAuth.as(users.save(new User("alice@smail.iitm.ac.in")));
-        Authentication b = TestAuth.as(users.save(new User("bob@smail.iitm.ac.in")));
+        Authentication a = TestAuth.as(users.save(TestUsers.user("alice@smail.iitm.ac.in")));
+        Authentication b = TestAuth.as(users.save(TestUsers.user("bob@smail.iitm.ac.in")));
         alice = authentication(a);
         bob = authentication(b);
     }

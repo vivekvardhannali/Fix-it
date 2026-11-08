@@ -38,7 +38,7 @@ class SearchPurposeTest {
 
     @Test
     void indexingUsesDocument_searchingUsesQuery() {
-        User author = users.save(new User("alice@smail.iitm.ac.in"));
+        User author = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
         Question q = questions.save(new Question(author, "WiFi drops", "laptop disconnects"));
         embeddingService.refresh(q.getId(), q.getTitle(), q.getBody());
         assertThat(fake.purposes).containsExactly(EmbeddingPurpose.DOCUMENT);

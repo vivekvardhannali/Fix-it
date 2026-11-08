@@ -1,19 +1,13 @@
 package com.fixit.security;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
@@ -25,9 +19,7 @@ import com.fixit.exception.ApiError;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http, FixItOidcUserService oidcUserService, ObjectMapper mapper,
-            @Value("${app.frontend-url}") String frontendUrl,
-            @Value("${app.auth.google-enabled:false}") boolean googleEnabled, TabSessionService tabSessions) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, ObjectMapper mapper, TabSessionService tabSessions) throws Exception {
         http
                 // TESTING-CONVENIENCE (per-tab sessions, D23): a Bearer token identifies the caller and wins over the shared cookie
                 .addFilterAfter(new TabSessionFilter(tabSessions), SecurityContextHolderFilter.class)
@@ -42,9 +34,6 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET, "/", "/*.html", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll();
                     // username/password sign-up and login must be reachable without a session
                     auth.requestMatchers("/api/auth/register", "/api/auth/login").permitAll();
-                    if (googleEnabled) {
-                        auth.requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll();
-                    }
                     auth.anyRequest().authenticated();      // must stay last
                 })
                 // Defence in depth for the page code: nothing but our own files may run or load (no inline scripts, no CDN).
@@ -62,23 +51,6 @@ public class SecurityConfig {
                         .addLogoutHandler((request, response, authentication) -> tabSessions.revoke(TabSessionService.bearer(request)))
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID"));
-
-        // Google sign-in is kept in the code but OFF by default (app.auth.google-enabled / GOOGLE_AUTH_ENABLED).
-        if (googleEnabled) {
-            http.oauth2Login(oauth -> oauth
-                    .userInfoEndpoint(info -> info.oidcUserService(oidcUserService))
-                    .defaultSuccessUrl(frontendUrl, true)
-                    .failureHandler(loginFailureHandler(frontendUrl)));
-        }
         return http.build();
-    }
-
-    /** Sends the browser back to the frontend login page with a short error code. */
-    public static AuthenticationFailureHandler loginFailureHandler(String frontendUrl) {
-        return (request, response, exception) -> {
-            String code = exception instanceof OAuth2AuthenticationException oauth
-                    ? oauth.getError().getErrorCode() : "authentication_failed";
-            response.sendRedirect(frontendUrl + "/login?error=" + URLEncoder.encode(code, StandardCharsets.UTF_8));
-        };
     }
 }

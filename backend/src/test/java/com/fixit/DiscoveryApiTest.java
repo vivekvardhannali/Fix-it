@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
@@ -42,10 +41,10 @@ class DiscoveryApiTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        alice = authentication(TestAuth.as(users.save(new User("alice@smail.iitm.ac.in"))));
-        bob = authentication(TestAuth.as(users.save(new User("bob@smail.iitm.ac.in"))));
-        carol = authentication(TestAuth.as(users.save(new User("carol@smail.iitm.ac.in"))));
-        dave = authentication(TestAuth.as(users.save(new User("dave@smail.iitm.ac.in"))));
+        alice = authentication(TestAuth.as(users.save(TestUsers.user("alice@smail.iitm.ac.in"))));
+        bob = authentication(TestAuth.as(users.save(TestUsers.user("bob@smail.iitm.ac.in"))));
+        carol = authentication(TestAuth.as(users.save(TestUsers.user("carol@smail.iitm.ac.in"))));
+        dave = authentication(TestAuth.as(users.save(TestUsers.user("dave@smail.iitm.ac.in"))));
         onlyA = question(alice, "Only A", "[\"tech\"]");
         onlyB = question(alice, "Only B", "[\"math\"]");
         both = question(bob, "Both A and B", "[\"tech\",\"math\"]");

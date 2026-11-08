@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 import com.fixit.support.FakeEmbeddings;
 
@@ -81,8 +80,8 @@ class ErrorHandlingTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        owner = authentication(TestAuth.as(users.save(new User("owner@smail.iitm.ac.in"))));
-        stranger = authentication(TestAuth.as(users.save(new User("stranger@smail.iitm.ac.in"))));
+        owner = authentication(TestAuth.as(users.save(TestUsers.user("owner@smail.iitm.ac.in"))));
+        stranger = authentication(TestAuth.as(users.save(TestUsers.user("stranger@smail.iitm.ac.in"))));
         q = create("/api/questions", owner, "{\"title\":\"wifi hostel problem\",\"body\":\"laptop drops wifi\",\"tags\":[\"tech\"]}", "questionId");
         a = create("/api/questions/" + q + "/answers", stranger, "{\"body\":\"restart\"}", "answerId");
         c = create("/api/questions/" + q + "/comments", stranger, "{\"body\":\"try dns\"}", "commentId");

@@ -8,31 +8,11 @@ Everything below is a **temporary placeholder**. Replace it before real use.
 Values are read from environment variables (defaults live in `backend/src/main/resources/application.properties`).
 Never commit real secrets to git.
 
-## Google Sign-In — PARKED (off by default; username + password login is active)
-
-To turn Google back on later: `GOOGLE_AUTH_ENABLED=true` plus the two values below. Until then nothing here is needed.
-
-
-| Env variable | Current placeholder | What to put there |
-|---|---|---|
-| `GOOGLE_CLIENT_ID` | `PLACEHOLDER_GOOGLE_CLIENT_ID` | OAuth 2.0 Client ID from Google Cloud Console (APIs & Services → Credentials) |
-| `GOOGLE_CLIENT_SECRET` | `PLACEHOLDER_GOOGLE_CLIENT_SECRET` | The matching client secret |
-
-In Google Cloud Console, when creating the OAuth client (type: Web application):
-- Authorised redirect URI must be exactly: `http://localhost:8080/login/oauth2/code/google`
-  (add the production URL equivalent when deploying).
-- Configure the OAuth consent screen. Use **Internal** only if the Google Workspace belongs to IITM;
-  otherwise use External and rely on Fix It's own `@smail.iitm.ac.in` check.
-
-Until these are set, the app logs a startup warning and the "Continue with Google" redirect will
-reach Google but be rejected there. Tests do not need real credentials.
-
 ## App settings (Phase 5)
 
 | Env variable | Current default | Change when |
 |---|---|---|
 | `ALLOWED_EMAIL_DOMAIN` | `smail.iitm.ac.in` | The allowed-account rule changes (confirm this is the correct domain) |
-| `FRONTEND_URL` | `http://localhost:3000` | The frontend exists. Users are redirected here after login, and to `<FRONTEND_URL>/login?error=<code>` on failure |
 
 ## Database (Phase 2)
 

@@ -5,12 +5,12 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fixit.entity.User;
-import com.fixit.exception.AccountNotAllowedException;
 import com.fixit.exception.BadRequestException;
 import com.fixit.exception.ConflictException;
 import com.fixit.exception.InvalidCredentialsException;
@@ -18,13 +18,12 @@ import com.fixit.repository.UserRepository;
 import com.fixit.security.LoginThrottle;
 
 /**
- * Username + password accounts (temporary alternative to Google sign-in).
- * Passwords are stored only as BCrypt hashes. Login failures all look the same (unknown name, wrong password, or an
- * account without a password) and cost the same time, and repeated failures are throttled.
+ * Username + password accounts, the only way to sign in.
+ * Passwords are stored only as BCrypt hashes. Login failures all look the same (unknown name or wrong password) and cost
+ * the same time, and repeated failures are throttled.
  *
  * NOTE: the smail given at registration is NOT verified (no email is sent), so anyone can register any
- * @smail.iitm.ac.in address that is not yet taken. Acceptable for development/testing; Google sign-in is the intended
- * way to prove the smail belongs to the person.
+ * @smail.iitm.ac.in address that is not yet taken.
  */
 @Service
 public class AccountService {
@@ -37,15 +36,15 @@ public class AccountService {
             "abcd1234", "11111111", "00000000");
 
     private final UserRepository users;
-    private final UserProvisioningService provisioning;
+    private final String allowedDomain;
     private final PasswordEncoder encoder;
     private final LoginThrottle throttle;
     private final String dummyHash;                                // compared against when the account does not exist
 
-    public AccountService(UserRepository users, UserProvisioningService provisioning, PasswordEncoder encoder,
-            LoginThrottle throttle) {
+    public AccountService(UserRepository users, PasswordEncoder encoder, LoginThrottle throttle,
+            @Value("${app.auth.allowed-email-domain}") String allowedDomain) {
         this.users = users;
-        this.provisioning = provisioning;
+        this.allowedDomain = allowedDomain.toLowerCase(Locale.ROOT);
         this.encoder = encoder;
         this.throttle = throttle;
         this.dummyHash = encoder.encode("not-a-real-password-used-only-for-timing");
@@ -58,12 +57,7 @@ public class AccountService {
             throw new BadRequestException("Username must be 3-30 characters: letters, digits, '.', '_' or '-' "
                     + "(starting with a letter or digit)");
         }
-        String smail;
-        try {
-            smail = provisioning.normalizeAllowedSmail(rawSmail);
-        } catch (AccountNotAllowedException e) {
-            throw new BadRequestException(e.getMessage());
-        }
+        String smail = normalizeAllowedSmail(rawSmail);
         checkPassword(password, username, smail);
 
         if (users.existsByUsernameIgnoreCase(username)) {
@@ -84,7 +78,7 @@ public class AccountService {
         User user = users.findByUsernameIgnoreCase(identifier)
                 .or(() -> users.findBySmail(identifier.toLowerCase(Locale.ROOT))).orElse(null);
         boolean ok;
-        if (user == null || user.getPasswordHash() == null) {
+        if (user == null) {
             encoder.matches(password, dummyHash);                  // same work as a real check
             ok = false;
         } else {
@@ -96,6 +90,16 @@ public class AccountService {
         }
         throttle.recordSuccess(identifier);
         return user;
+    }
+
+    /** Lower-cases/trims the smail and checks its domain. */
+    private String normalizeAllowedSmail(String email) {
+        String smail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+        int at = smail.lastIndexOf('@');
+        if (at <= 0 || !smail.substring(at + 1).equals(allowedDomain)) {
+            throw new BadRequestException("Only @" + allowedDomain + " accounts can use Fix It");
+        }
+        return smail;
     }
 
     private static void checkPassword(String password, String username, String smail) {

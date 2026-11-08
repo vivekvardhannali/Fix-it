@@ -43,9 +43,9 @@ class NotificationApiTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        User a = users.save(new User("a@smail.iitm.ac.in"));
-        User b = users.save(new User("b@smail.iitm.ac.in"));
-        User c = users.save(new User("c@smail.iitm.ac.in"));
+        User a = users.save(TestUsers.user("a@smail.iitm.ac.in"));
+        User b = users.save(TestUsers.user("b@smail.iitm.ac.in"));
+        User c = users.save(TestUsers.user("c@smail.iitm.ac.in"));
         idA = a.getId(); idB = b.getId(); idC = c.getId();
         userA = authentication(TestAuth.as(a));
         userB = authentication(TestAuth.as(b));

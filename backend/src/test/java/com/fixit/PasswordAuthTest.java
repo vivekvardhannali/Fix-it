@@ -21,13 +21,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 import com.fixit.security.LoginThrottle;
 
 import jakarta.persistence.EntityManager;
 
-/** Username + password sign-up and login, with the SHIPPED config (Google sign-in off). */
+/** Username + password sign-up and login. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -132,13 +131,6 @@ class PasswordAuthTest {
         assertThat(jdbc.queryForObject("select count(*) from users", Integer.class)).isEqualTo(1);
     }
 
-    @Test
-    void aGoogleCreatedAccountCannotBeTakenOverByRegisteringItsSmail() throws Exception {
-        users.save(new User("google.user@smail.iitm.ac.in"));                 // exists, has no password
-        assertThat(send("/api/auth/register", register("hijacker", "google.user@smail.iitm.ac.in", PASSWORD))
-                .getResponse().getStatus()).isEqualTo(409);
-    }
-
     // ---- login -----------------------------------------------------------------------------
 
     @Test
@@ -155,16 +147,13 @@ class PasswordAuthTest {
     @Test
     void everyKindOfFailureLooksIdentical() throws Exception {
         registerAlice();
-        users.save(new User("google.only@smail.iitm.ac.in"));                  // account without a password
-        em.flush();
-        String[] attempts = { login("alice", "wrong-password"), login("nobody", PASSWORD),
-                login("google.only@smail.iitm.ac.in", PASSWORD), login("alice", "") };
-        for (int i = 0; i < 3; i++) {
+        String[] attempts = { login("alice", "wrong-password"), login("nobody", PASSWORD), login("alice", "") };
+        for (int i = 0; i < 2; i++) {
             MvcResult r = send("/api/auth/login", attempts[i]);
             assertThat(r.getResponse().getStatus()).isEqualTo(401);
             assertThat(r.getResponse().getContentAsString()).contains("Invalid username or password").doesNotContain("alice");
         }
-        assertThat(send("/api/auth/login", attempts[3]).getResponse().getStatus()).isEqualTo(400);   // blank password = invalid request
+        assertThat(send("/api/auth/login", attempts[2]).getResponse().getStatus()).isEqualTo(400);   // blank password = invalid request
     }
 
     @Test
@@ -220,20 +209,6 @@ class PasswordAuthTest {
         mvc.perform(get("/api/me")).andExpect(status().isUnauthorized());
         assertThat(send("/api/auth/login", "{}").getResponse().getStatus()).isEqualTo(400);       // reachable without a session
         assertThat(send("/api/auth/register", "{}").getResponse().getStatus()).isEqualTo(400);
-    }
-
-    @Test
-    void googleSignInIsOffByDefault() throws Exception {
-        mvc.perform(get("/oauth2/authorization/google")).andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void meShowsNoUsernameForAnAccountThatHasNone() throws Exception {
-        User google = users.save(new User("google.only@smail.iitm.ac.in"));
-        mvc.perform(get("/api/me").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
-                        .authentication(TestAuth.as(google))))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.username").doesNotExist())
-                .andExpect(jsonPath("$.smail").value("google.only@smail.iitm.ac.in"));
     }
 
     @Test

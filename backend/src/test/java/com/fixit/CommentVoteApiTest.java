@@ -46,9 +46,9 @@ class CommentVoteApiTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        User a = users.save(new User("alice@smail.iitm.ac.in"));
-        User b = users.save(new User("bob@smail.iitm.ac.in"));
-        User c = users.save(new User("carol@smail.iitm.ac.in"));
+        User a = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
+        User b = users.save(TestUsers.user("bob@smail.iitm.ac.in"));
+        User c = users.save(TestUsers.user("carol@smail.iitm.ac.in"));
         aliceId = a.getId();
         bobId = b.getId();
         alice = authentication(TestAuth.as(a));

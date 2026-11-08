@@ -43,7 +43,7 @@ loginForm.addEventListener("submit", async (event) => {
 // ---- sign up
 const signup = {
   username: textField({ id: "signup-username", label: "Username", autocomplete: "username", maxlength: 30, hint: "3-30 characters: letters, digits, . _ -" }),
-  smail: textField({ id: "signup-smail", label: "IITM smail", type: "text", autocomplete: "email", maxlength: 255, hint: `Your @${SMAIL_DOMAIN} address. It is not verified by email.` }),
+  smail: textField({ id: "signup-smail", label: "IITM smail", type: "text", autocomplete: "email", maxlength: 255, hint: `Your @${SMAIL_DOMAIN} address.` }),
   password: textField({ id: "signup-password", label: "Password", type: "password", autocomplete: "new-password", maxlength: 200, hint: "At least 8 characters." }),
 };
 const signupSubmit = h("button", { type: "submit", class: "btn btn-primary", id: "signup-submit" }, "Sign up");
@@ -93,7 +93,7 @@ if (location.hash === "#signup") show("signup");
 try {
   const me = await api.me({ auth: false });
   if (me.perTabSessions && !api.hasTabToken()) {
-    const who = me.username || "user" + me.userId;
+    const who = me.username;
     messages.after(h("div", { class: "msg msg--info", id: "already-logged-in", role: "status" },
       `This browser is already logged in as ${who}. `, h("a", { href: next, id: "continue-as" }, `Continue as ${who}`), " or log in below as someone else in this tab."));
   } else {

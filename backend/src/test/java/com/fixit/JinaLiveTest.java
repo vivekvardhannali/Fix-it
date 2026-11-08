@@ -17,7 +17,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.fixit.dto.QuestionRequest;
 import com.fixit.embedding.EmbeddingPurpose;
 import com.fixit.embedding.EmbeddingService;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 import com.fixit.search.HybridRanking;
 import com.fixit.search.LexicalScorer;
@@ -85,7 +84,7 @@ class JinaLiveTest {
     void realApi_endToEnd_storeThenSearch_andPrintScoreTable() {
         org.junit.jupiter.api.Assumptions.assumeTrue(jdbc.queryForObject("select count(*) from questions", Integer.class) == 0,
                 "needs an EMPTY database (other questions would change the rankings): run `node frontend/test/seed.mjs --clear` first");
-        userId = users.save(new User("livejina@smail.iitm.ac.in")).getId();
+        userId = users.save(TestUsers.user("livejina@smail.iitm.ac.in")).getId();
         String[][] data = {
                 { "WiFi keeps disconnecting in hostel", "my laptop loses the wifi connection every hour in hostel block", "tech" },
                 { "Cannot connect to hostel WiFi", "laptop wifi disconnects hostel connection", "tech" },

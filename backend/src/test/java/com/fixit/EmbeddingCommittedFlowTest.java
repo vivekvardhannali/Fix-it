@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.fixit.dto.QuestionRequest;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 import com.fixit.search.QuestionEmbeddingService;
 import com.fixit.search.ReindexReport;
@@ -42,7 +41,7 @@ class EmbeddingCommittedFlowTest {
     @BeforeEach
     void setUp() {
         fake.reset();
-        userId = users.save(new User("flow-author@smail.iitm.ac.in")).getId();
+        userId = users.save(TestUsers.user("flow-author@smail.iitm.ac.in")).getId();
     }
 
     @AfterEach

@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fixit.entity.User;
 import com.fixit.repository.UserRepository;
 import com.fixit.security.RateLimiter;
 
@@ -46,8 +45,8 @@ class RateLimitApiTest {
     @BeforeEach
     void setUp() {
         rateLimiter.clear();    // singleton shared by the tests of this context (registrations come from one address)
-        alice = authentication(TestAuth.as(users.save(new User("alice@smail.iitm.ac.in"))));
-        bob = authentication(TestAuth.as(users.save(new User("bob@smail.iitm.ac.in"))));
+        alice = authentication(TestAuth.as(users.save(TestUsers.user("alice@smail.iitm.ac.in"))));
+        bob = authentication(TestAuth.as(users.save(TestUsers.user("bob@smail.iitm.ac.in"))));
     }
 
     private int search(RequestPostProcessor as) throws Exception {

@@ -63,7 +63,7 @@ class SemanticSearchTest {
     @BeforeEach
     void setUp() {
         fake.reset();
-        User author = users.save(new User("alice@smail.iitm.ac.in"));
+        User author = users.save(TestUsers.user("alice@smail.iitm.ac.in"));
         q1 = make(author, "WiFi keeps disconnecting in hostel",
                 "my laptop loses wifi connection every hour in hostel block", "Networking");
         q2 = make(author, "Cannot connect to hostel WiFi",

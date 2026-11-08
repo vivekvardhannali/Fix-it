@@ -15,9 +15,9 @@ export function currentUser() {
   return userPromise;
 }
 
-/** What to show for a person: username, or user<id> when the account has none. */
+/** What to show for a person: their username (every account has one). */
 export function displayName(user) {
-  return user.username || "user" + user.userId;
+  return user.username;
 }
 
 export async function logout() {

@@ -62,7 +62,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 ### Configuration files
 | File | What it holds |
 |---|---|
-| `src/main/resources/application.properties` | Every setting, each overridable by environment variable (DB URL, Google OAuth, embedding provider, search weights/thresholds, login & rate limits, allowed tags, per-tab sessions). |
+| `src/main/resources/application.properties` | Every setting, each overridable by environment variable (DB URL, embedding provider, search weights/thresholds, login & rate limits, allowed tags, per-tab sessions). |
 | `src/main/resources/application-dev.properties` | `dev` profile: serve `../frontend/` from disk with no caching; turn per-tab sessions on (testing convenience D23). |
 | `db/schema.sql` | The 9 design tables + `question_embeddings`; seeds the four tags. |
 | `db/checkpoint3_test_data.sql` | Small hand-made sample data used during early development. |
@@ -74,7 +74,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 
 | Table | Purpose | Notable constraints |
 |---|---|---|
-| `users` | Accounts. `smail` unique; `username` + `password_hash` (BCrypt) are NULL for Google-created accounts. | Unique index on `lower(username)`. |
+| `users` | Accounts. `smail` unique; `username` + `password_hash` (BCrypt) are required. | Unique index on `lower(username)`. |
 | `questions` | Title, body, `is_resolved`, `accepted_answer_id`, `interest_count` (the "+" count), timestamps. | `interest_count >= 0`. Composite FK `(accepted_answer_id, question_id)` → answers, so an accepted answer must belong to its question. |
 | `tags` | The fixed tags (`tech`, `math`, `code`, `others`). | Unique on `lower(name)`. |
 | `question_tags` | Question ↔ tag many-to-many. | PK `(question_id, tag_id)`. |
@@ -101,17 +101,15 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 
 | File | Contents |
 |---|---|
-| `SecurityConfig.java` | `filterChain(...)` builds the whole security setup: adds `TabSessionFilter`; CSRF off (cookie is SameSite=Lax and the API is JSON-only); public paths = `/api/ping`, `/error`, `GET /`, `/*.html`, `/css/**`, `/js/**`, `/img/**`, `/favicon.ico`, `/api/auth/register`, `/api/auth/login` (+ OAuth paths if Google is on); **everything else needs login**. Sets a strict Content-Security-Policy (`default-src 'self'` — no inline scripts, no CDNs). 401/403 are returned as JSON `ApiError`. Logout is `POST /api/logout` → 204, revokes the tab token, kills the session, deletes `JSESSIONID`. Google `oauth2Login` is only wired if `app.auth.google-enabled=true`. `loginFailureHandler(...)` redirects Google failures to the frontend with an error code. |
+| `SecurityConfig.java` | `filterChain(...)` builds the whole security setup: adds `TabSessionFilter`; CSRF off (cookie is SameSite=Lax and the API is JSON-only); public paths = `/api/ping`, `/error`, `GET /`, `/*.html`, `/css/**`, `/js/**`, `/img/**`, `/favicon.ico`, `/api/auth/register`, `/api/auth/login`; **everything else needs login**. Sets a strict Content-Security-Policy (`default-src 'self'` — no inline scripts, no CDNs). 401/403 are returned as JSON `ApiError`. Logout is `POST /api/logout` → 204, revokes the tab token, kills the session, deletes `JSESSIONID`. |
 | `FixItPrincipal.java` | Interface with `getUserId()`. Controllers depend only on this, whatever the login method. |
 | `PasswordFixItPrincipal.java` | The logged-in user for password login (id + display name; **no password or hash**). Stored in the HTTP session. |
-| `GoogleFixItPrincipal.java` | Same, for Google sign-in (extends `DefaultOidcUser`). |
-| `FixItOidcUserService.java` | After Google authenticates: `loadUser(...)` → `toPrincipal(...)` calls `UserProvisioningService.loginOrRegister` (smail-domain rule) and wraps the result. Maps rejection to OAuth error `account_not_allowed`. |
 | `PasswordConfig.java` | `PasswordEncoder` bean = BCrypt (strength 10, random salt). |
 | `LoginThrottle.java` | Failed-login lockout. `checkAllowed(account, ip)` throws 429 if locked; `recordFailure(...)`; `recordSuccess(account)` clears the account counter; limits 5/account and 20/IP per 15 min (configurable). Unknown account names are counted too, so nothing reveals which accounts exist. In-memory. |
 | `RateLimiter.java` | Sliding-window limiter protecting paid/abusable calls. `check(limit, key)` for `SEARCH` (30/min/user), `QUESTION_WRITE` (10/min/user), `REGISTER` (10/hour/IP); throws 429 with `Retry-After`. In-memory. |
 | `TabSessionService.java` | **Testing convenience (D23).** Issues random 256-bit tokens (stored only as SHA-256 hashes in memory, 12 h sliding idle expiry) so each browser *tab* can be a different account. `issue`, `resolve`, `revoke`, `bearer(request)` (reads `Authorization: Bearer …`). Off unless `app.auth.per-tab-sessions=true`. |
 | `TabSessionFilter.java` | If a request carries a Bearer token, it decides the caller and **always beats the cookie**; an unknown/expired token means "not logged in". |
-| `PlaceholderConfigWarning.java` | On `ApplicationReadyEvent`, logs warnings for any placeholder settings (Google creds when enabled, embedding config, search tuning). |
+| `PlaceholderConfigWarning.java` | On `ApplicationReadyEvent`, logs warnings for any placeholder settings (embedding config, search tuning). |
 
 ### 4.3 `controller/`
 
@@ -138,7 +136,6 @@ with `@Valid`, and call one service method.
 | File | Methods and rules |
 |---|---|
 | `AccountService` | `register(username, smail, password)`: username regex `^[A-Za-z0-9][A-Za-z0-9_.-]{2,29}$`; smail must be `@smail.iitm.ac.in` (normalised, **not email-verified**); password ≥ 8 chars, ≤ 72 bytes, not a common/obvious password; 409 if username or smail taken; saves BCrypt hash. `authenticate(identifier, password, ip)`: checks `LoginThrottle`, finds user by username **or** smail, always does one BCrypt compare (even for unknown users, against a dummy hash, so timing is the same), records failure/success, one generic message `Invalid username or password`. |
-| `UserProvisioningService` | `loginOrRegister(email, verified)` (Google path: requires a verified email, creates the user if new). `normalizeAllowedSmail(email)`: trim + lower-case + domain check; shared with registration. |
 | `QuestionService` | `create` (needs ≥ 1 valid tag; saves question; applies tags; publishes `QuestionContentChanged`). `get`. `update` (author only; republishes the event only if title/body actually changed; `request.tags()==null` leaves tags alone). `acceptAnswer` (author only; answer must belong to the question; sets `resolved=true`; picking another answer later switches it). `getTags`, `setTags`. Private helpers `applyTags` (makes the tag set exactly the wanted one), `findOwned…` (404 / 403 checks). |
 | `AnswerService` | `add`, `listForQuestion` (oldest first), `update` (**only the answer's author** — not even the question's author). |
 | `CommentService` | `addComment`, `addReply` (lands on the parent's question), `thread` (builds the nested tree from one flat query, vote counts loaded with two queries), `edit` (author only). Every new comment calls `NotificationService.onCommentCreated` in the same transaction. Comments belong to questions only — never to answers. |
@@ -153,7 +150,7 @@ with `@Valid`, and call one service method.
 JPA mappings, one per table: `User`, `Question` (has `touch()` to bump `updated_at`, tag set, accepted answer),
 `Answer`, `QuestionComment` (self-reference for replies), `QuestionCommentVote` + `QuestionCommentVoteId` (composite key),
 `QuestionInterest` + `…Id`, `QuestionTag` + `…Id`, `Tag`, `Notification` (+ `NotificationType`: `COMMENT_ON_QUESTION`,
-`REPLY_TO_COMMENT`), `VoteType` (`UP`, `DOWN`). `User.getDisplayName()` returns the username, or `user<id>` when none;
+`REPLY_TO_COMMENT`), `VoteType` (`UP`, `DOWN`). `User.getDisplayName()` returns the username;
 the smail is **never** shown as a display name.
 
 ### 4.6 `repository/`
@@ -175,7 +172,7 @@ totalPages`). `from(...)` factory methods must be called inside a transaction (t
 
 ### 4.8 `exception/`
 `NotFoundException` (404), `ForbiddenException` (403), `BadRequestException` (400), `ConflictException` (409),
-`InvalidCredentialsException` (401), `TooManyRequestsException` (429 + `Retry-After`), `AccountNotAllowedException`.
+`InvalidCredentialsException` (401), `TooManyRequestsException` (429 + `Retry-After`).
 `ApiError` is the one JSON error shape `{timestamp, status, error, message}`; `ApiError.write(...)` is used by the
 security filters. `GlobalExceptionHandler` (`@RestControllerAdvice`) maps each exception to a status + safe message;
 database integrity races → 409 "Conflicting update, please retry"; `EmbeddingException` / `SearchNotConfiguredException`
@@ -293,8 +290,7 @@ author, the answer must belong to the question → sets `accepted_answer_id` and
   moves to another site).
 * CSP blocks inline scripts and third-party sources; error messages never include exception text.
 * Rate limits protect the paid embedding calls; the Jina key is only ever in the `Authorization` header.
-* Known limitation: the smail entered at sign-up is **not verified** by email (Google sign-in is the intended proof, kept
-  in the code but switched off).
+* Known limitation: the smail entered at sign-up is **not verified** by email.
 * Per-tab sessions (D23) are a testing convenience — leave **off** in real use.
 
 ## 7. Tests (`backend/src/test/java/com/fixit/`)

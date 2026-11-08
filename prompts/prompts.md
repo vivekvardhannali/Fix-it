@@ -976,3 +976,72 @@ production use while critical security or verification requirements
 remain unresolved.
 
 ––––––––––––––––––––––––––––––––––––
+
+# UI Migration
+
+## Prompt 26 — UI Migration: Redesign the frontend from the Stack Overflow look to a modern workspace look using `UI_Migration.md`
+
+**Objective / Instruction:**
+
+Redesign the visual layer of `frontend/` following phases M0–M6 of
+`Specifications_and_designs/UI_Migration.md`, replacing the Stack
+Overflow look with an original, modern design.
+
+**Repository Context:**
+
+Inspect `frontend/` (pages, components, `css/fixit.css`, the style
+guide) and refer to `UI_Migration.md` for the invariants, design
+language, phases and end-to-end checklist. `UI_Migration.md` supersedes
+only Section 2 "Visual Design" of `Fix_It_Frontend_Design_Document.md`.
+
+**Constraints / Invariants:**
+
+-   Visual change only: no functional change and no backend change.
+
+-   Do not change `api.js`, `session.js`, `validate.js`, `util.js`,
+    `time.js`, `highlight.js` or the logic in `form.js`.
+
+-   Keep every page, URL, API call, validation rule, error message,
+    element `id` and ARIA hook that the scripts and tests rely on.
+
+-   Stay CSP-safe: no inline scripts, CDNs or web fonts, and no banned
+    DOM APIs.
+
+-   Meet WCAG AA contrast, keep visible focus and one `h1` per page, and
+    allow no horizontal scrolling at 360px.
+
+-   Use colour tokens on `:root`; light theme only.
+
+-   Do not touch the development database; use an isolated test
+    database.
+
+**Examples / Edge Cases:**
+
+Header wrapping at 360px, empty and loading states, the accepted answer
+listed first, deep comment threads, the 503 search message, the
+`debug=1` tuning view, the "already logged in" notice, and highlight
+from a notification.
+
+**Implementation Approach:**
+
+Work through M0–M6 in order, checking each phase's exit criteria and
+invariants I1–I8 before moving on. Run the end-to-end checklist on the
+old UI first as the baseline, then rebuild tokens and base components,
+the app shell and login, lists, the question page, and the ask/edit
+form. Fix confirmed issues before proceeding.
+
+**Acceptance Criteria:**
+
+The same end-to-end script passes on the new UI at 1280px and 360px with
+no console, CSP or HTTP errors. All text pairs are at least 4.5:1, the
+style guide matches the pages, and the only changes are under
+`frontend/` plus `UI_Migration.md`.
+
+**Verification / Reporting:**
+
+Run the end-to-end script, the contrast check, the banned-API grep and
+`mvn test`, and take screenshots of every page. Update the status table
+in `UI_Migration.md` and report changed files, actual results, and what
+remains unverified.
+
+––––––––––––––––––––––––––––––––––––
